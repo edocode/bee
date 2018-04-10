@@ -197,7 +197,7 @@ func (tb *Table) String() string {
 }
 
 // String returns the source code string of a field in Table struct
-// It maps to a column in database table. e.g. Id int `orm:"column(id);auto"`
+// It maps to a column in database table. e.g. Id int64 `orm:"column(id);auto"`
 func (col *Column) String() string {
 	return fmt.Sprintf("%s %s %s", col.Name, col.Type, col.Tag.String())
 }
@@ -449,7 +449,7 @@ func (mysqlDB *MysqlDB) GetColumns(db *sql.DB, table *Table, blackList map[strin
 		tag.Comment = columnComment
 		if table.Pk == colName {
 			col.Name = "Id"
-			col.Type = "int"
+			col.Type = "int64"
 			if extra == "auto_increment" {
 				tag.Auto = true
 			} else {
@@ -648,7 +648,7 @@ func (postgresDB *PostgresDB) GetColumns(db *sql.DB, table *Table, blackList map
 		tag.Column = colName
 		if table.Pk == colName {
 			col.Name = "Id"
-			col.Type = "int"
+			col.Type = "int64"
 			if extra == "auto_increment" {
 				tag.Auto = true
 			} else {
@@ -1033,7 +1033,7 @@ func Add{{modelName}}(m *{{modelName}}) (id int64, err error) {
 
 // Get{{modelName}}ById retrieves {{modelName}} by Id. Returns error if
 // Id doesn't exist
-func Get{{modelName}}ById(id int) (v *{{modelName}}, err error) {
+func Get{{modelName}}ById(id int64) (v *{{modelName}}, err error) {
 	o := orm.NewOrm()
 	v = &{{modelName}}{Id: id}
 	if err = o.Read(v); err == nil {
@@ -1137,7 +1137,7 @@ func Update{{modelName}}ById(m *{{modelName}}) (err error) {
 
 // Delete{{modelName}} deletes {{modelName}} by Id and returns error if
 // the record to be deleted doesn't exist
-func Delete{{modelName}}(id int) (err error) {
+func Delete{{modelName}}(id int64) (err error) {
 	o := orm.NewOrm()
 	v := {{modelName}}{Id: id}
 	// ascertain id exists in the database
