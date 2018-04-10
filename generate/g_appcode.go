@@ -313,7 +313,7 @@ func gen(dbms, connStr string, mode byte, selectedTableNames map[string]bool, ap
 		}
 		tables := getTableObjects(tableNames, db, trans)
 		mvcPath := new(MvcPath)
-		mvcPath.ModelPath = path.Join(apppath, "models")
+		mvcPath.ModelPath = path.Join(apppath, "schema")
 		mvcPath.ControllerPath = path.Join(apppath, "controllers")
 		mvcPath.RouterPath = path.Join(apppath, "routers")
 		createPaths(mode, mvcPath)
@@ -997,12 +997,12 @@ func getPackagePath(curpath string) (packpath string) {
 }
 
 const (
-	StructModelTPL = `package models
+	StructModelTPL = `package schema
 {{importTimePkg}}
 {{modelStruct}}
 `
 
-	ModelTPL = `package models
+	ModelTPL = `package schema
 
 import (
 	"errors"
