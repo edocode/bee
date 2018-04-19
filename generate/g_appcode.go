@@ -449,7 +449,7 @@ func (mysqlDB *MysqlDB) GetColumns(db *sql.DB, table *Table, blackList map[strin
 		tag.Comment = columnComment
 		if table.Pk == colName {
 			col.Name = "Id"
-			col.Type = "int64"
+			col.Type = "{{modelName}}" + "Id"
 			if extra == "auto_increment" {
 				tag.Auto = true
 			} else {
@@ -1005,11 +1005,13 @@ const (
 	ModelTPL = `package schema
 
 import (
-	"fmt"
 	{{timePkg}}
 
+	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/orm"
 )
+
+type {{modelName}}Id int64
 
 {{modelStruct}}
 
@@ -1023,16 +1025,43 @@ func init() {
 
 // Add{{modelName}} insert a new {{modelName}} into database and returns
 // last inserted Id on success.
-func Add{{modelName}}(m *{{modelName}}) (id int64, err error) {
-	o := orm.NewOrm()
-	id, err = o.Insert(m)
+func (o *Ormer) Add{{modelName}}(m *{{modelName}}) (id {{modelName}}Id, err error) {
+	if m.CreateTime.IsZero() {
+		m.CreateTime = time.Now()
+	}
+	rawId, err := o.Insert(m)
+	id = {{modelName}}Id(rawId)
+	return
+}
+
+func (o *Ormer) Add{{modelName}}Bulk(ms []*{{modelName}}) (err error) {
+	if len(ms) == 0 {
+		return
+	}
+	for _, m := range ms {
+		if m.CreateTime.IsZero() {
+			m.CreateTime = time.Now()
+		}
+	}
+	var num int64
+	if num, err = o.InsertMulti(len(ms), ms); err == nil {
+		logs.Debug("Number of records add in database:", num)
+	}
+	return
+}
+
+func (o *Ormer) AddOrUpdate{{modelName}}(m *{{modelName}}) (id {{modelName}}Id, err error) {
+	if m.CreateTime.IsZero() {
+		m.CreateTime = time.Now()
+	}
+	rawId, err := o.InsertOrUpdate(m)
+	id = {{modelName}}Id(rawId)
 	return
 }
 
 // Get{{modelName}}ById retrieves {{modelName}} by Id. Returns error if
 // Id doesn't exist
-func Get{{modelName}}ById(id int64) (v *{{modelName}}, err error) {
-	o := orm.NewOrm()
+func (o *Ormer) Get{{modelName}}ById(id {{modelName}}Id) (v *{{modelName}}, err error) {
 	v = &{{modelName}}{Id: id, DeleteFlg: 0}
 	if err = o.Read(v); err == nil {
 		return v, nil
@@ -1042,14 +1071,13 @@ func Get{{modelName}}ById(id int64) (v *{{modelName}}, err error) {
 
 // Update{{modelName}} updates {{modelName}} by Id and returns error if
 // the record to be updated doesn't exist
-func Update{{modelName}}ById(m *{{modelName}}) (err error) {
-	o := orm.NewOrm()
+func (o *Ormer) Update{{modelName}}ById(m *{{modelName}}) (err error) {
 	v := {{modelName}}{Id: m.Id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
 		if num, err = o.Update(m); err == nil {
-			fmt.Println("Number of records updated in database:", num)
+			logs.Debug("Number of records updated in database:", num)
 		}
 	}
 	return
@@ -1057,14 +1085,13 @@ func Update{{modelName}}ById(m *{{modelName}}) (err error) {
 
 // Delete{{modelName}} deletes {{modelName}} by Id and returns error if
 // the record to be deleted doesn't exist
-func Delete{{modelName}}(id int64) (err error) {
-	o := orm.NewOrm()
+func (o *Ormer) Delete{{modelName}}(id {{modelName}}Id) (err error) {
 	v := {{modelName}}{Id: id}
 	// ascertain id exists in the database
 	if err = o.Read(&v); err == nil {
 		var num int64
 		if num, err = o.Delete(&{{modelName}}{Id: id}); err == nil {
-			fmt.Println("Number of records deleted in database:", num)
+			logs.Debug("Number of records deleted in database:", num)
 		}
 	}
 	return
