@@ -464,6 +464,9 @@ func (mysqlDB *MysqlDB) GetColumns(db *sql.DB, table *Table, blackList map[strin
 			// check if the current column is a foreign key
 			if isFk && !isBl {
 				tag.RelFk = true
+				if isNullable == "YES" {
+					tag.Null = true
+				}
 				refStructName := fkCol.RefTable
 				col.Name = utils.CamelCase(colName)
 				col.Type = "*" + utils.CamelCase(refStructName)
